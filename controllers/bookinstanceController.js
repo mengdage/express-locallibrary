@@ -1,4 +1,5 @@
 var BookInstance = require('../models/bookinstance');
+var Book = require('../models/book')
 
 // Display list of all BookInstances
 exports.bookinstance_list = function(req, res, next) {
@@ -23,13 +24,55 @@ exports.bookinstance_detail = function(req, res) {
 };
 
 // Display BookInstance create form on GET
-exports.bookinstance_create_get = function(req, res) {
-    res.send('NOT IMPLEMENTED: BookInstance create GET');
+exports.bookinstance_create_get = function(req, res, next) {
+  Book.find({}, 'title').
+    exec(function(err, books) {
+      if(err) return next(err);
+
+      res.render('bookinstance_form', {title: 'Create Book Instance', book_list: books});
+    });
 };
 
 // Handle BookInstance create on POST
-exports.bookinstance_create_post = function(req, res) {
-    res.send('NOT IMPLEMENTED: BookInstance create POST');
+exports.bookinstance_create_post = function(req, res, next) {
+  req.checkBody('book', 'Title must not be empty').notEmpty();
+  req.checkBody('imprint', 'Imprint must not be empty').notEmpty();
+  req.checkBody('due_back', 'Invalid data').optional({checkFalsy: true}).isDate();
+
+  req.sanitize('book').escape();
+  req.sanitize('imprint').escape();
+  req.sanitize('status').escape();
+  req.sanitize('book').trim();
+  req.sanitize('imprint').trim();
+  req.sanitize('status').trim();
+  req.sanitize('due_back').toDate();
+
+  var bookinstance = new BookInstance({
+    book: req.body.book,
+    imprint: req.body.imprint,
+    status: req.body.status,
+    due_back: req.body.due_back
+  });
+
+  var errors = req.validationErrors();
+
+  if(errors) {
+    Book.find({}, 'title').
+      exec(function(err, books) {
+        if(err) return next(err);
+
+        res.render('bookinstance_form', {title: 'Create BookInstance', book_list: books, bookinstance: bookinstance, errors: errors});
+      });
+    return;
+  } else {
+    
+    bookinstance.save(function(err) {
+      if(err) return next(err);
+
+      res.redirect(bookinstance.url);
+    })
+  }
+
 };
 
 // Display BookInstance delete form on GET
