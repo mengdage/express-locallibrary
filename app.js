@@ -12,7 +12,7 @@ var users = require('./routes/users');
 var catalog = require('./routes/catalog');  //Import routes for "catalog" area of site
 
 // mongodb setup
-var mongoDB = 'mongodb://mengdb:lin00418!@ds129003.mlab.com:29003/local-library-db';
+var mongoDB = process.env.MONGODB_URI || 'mongodb://mengdb:lin00418!@ds129003.mlab.com:29003/local-library-db';
 mongoose.connect(mongoDB);
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
